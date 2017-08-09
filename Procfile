@@ -1,1 +1,1 @@
-web: python EchoBot.py
+web: python EchoBot.py -p $PORT
