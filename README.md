@@ -1,4 +1,4 @@
-# ${1Mlusa-cat-bot}
+# Mlusa-cat-bot
 Python telegram bot test. A bot that can send you random cat images of Ben and Rose.
 
 Live on Telegram: check out @daliycatie_bot for more details!
