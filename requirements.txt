@@ -5,3 +5,4 @@ requests==2.18.3
 urllib3==1.22
 python-telegram-bot==7.0.1
 future==0.16.0
+pandas==0.19.2
