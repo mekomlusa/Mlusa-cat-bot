@@ -10,6 +10,7 @@ Group chat functionality.
 
 v2: users can now decide whether to get a random cat photo push to their ends daily.
 
+··* v2.1: bug fixed for turning image push for twice or more times.
 ## TODO
 
 Inline mode

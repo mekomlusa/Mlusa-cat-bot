@@ -50,11 +50,23 @@ def catphoto(bot, update):
 def dailyalerton(bot, update, job_queue, chat_data):
     user = update.message.from_user
     user_chat_id = update.message.chat_id
+    
+    # Check to see if daily alert has already been turned on
+    if user_chat_id in alertFlag:
+        if alertFlag[user_chat_id] == 'Y':
+            update.message.reply_text('You have already turned on daily alert. There is no need to turn it on AGAIN.\n'
+                                  'Reply /DailyAlertOff to turn daily photo push off, or /help to check out all other command.')
+            logger.info(" %s, ID %s attempts to turn on daily alert again while there is already a record on file." % (user.first_name, user_chat_id))
+            bot.send_message(chat_id='112839673', text="%s, ID %s attempts to turn on daily alert again while there is already a record on file." % (user.first_name, user_chat_id))
+            return
+    
+    # if not then proceed
     update.message.reply_text('Daily alert turns ON. I will send you a cat photo every 24 hours.\n'
                               'Reply /DailyAlertOff to turn daily photo push off, or /help to check out all other command.')
     logger.info("Daily alert turned ON for %s, ID %s" % (user.first_name, user_chat_id))
     bot.send_message(chat_id='112839673', text="Daily alert turned ON for %s, ID %s" % (user.first_name, user_chat_id))
     alertFlag[user_chat_id]='Y'
+    
     # Add job to queue
     job = job_queue.run_daily(scheduleCat, datetime.datetime.now(), context=user_chat_id)
     chat_data['job'] = job
