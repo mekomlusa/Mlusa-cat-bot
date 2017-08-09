@@ -27,6 +27,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
+cats = pandas.read_csv("catimage.csv",sep=',',header=None)
 
 # Define a few command handlers. These usually take the two arguments bot and
 # update. Error handlers also receive the raised TelegramError object in error.
@@ -37,7 +38,6 @@ def help(bot, update):
     update.message.reply_text("""/start: to start the bot\n/catphoto: to get a random cat photo \n/comment: to send a comment to the devloper.\nAll other messages: I will respond in the future! \nFor all questions please contact dev @mlusaaa""")
     
 def catphoto(bot, update):
-    cats = pandas.read_csv("catimage.csv",sep=',',header=None)
     rint = random.randint(0,len(cats)-1)
     update.message.reply_photo(cats.ix[rint][1])
 
