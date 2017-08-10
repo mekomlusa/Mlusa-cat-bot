@@ -6,3 +6,6 @@ urllib3==1.22
 python-telegram-bot==7.0.1
 future==0.16.0
 pandas==0.19.2
+cloudinary==1.8.0
+mock==2.0.0
+pbr==3.1.1
