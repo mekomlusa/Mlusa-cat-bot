@@ -1,18 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Simple Bot to reply to Telegram messages
-# This program is dedicated to the public domain under the CC0 license.
-"""
-This Bot uses the Updater class to handle the bot.
-First, a few handler functions are defined. Then, those functions are passed to
-the Dispatcher and registered at their respective places.
-Then, the bot is started and runs until we press Ctrl-C on the command line.
-Usage:
-Basic Echobot example, repeats messages.
-Press Ctrl-C on the command line or send a signal to the process to stop the
-bot.
-"""
+# Daily catie Bot to send cat photos on Telegram
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, Job
 #import telegram
@@ -80,7 +69,7 @@ def dailyalerton(bot, update, job_queue, chat_data):
             return
     
     # Check to see if daily alert has already been turned on (after cycling)
-    cur.execute("SELECT * FROM pushid;")
+    cur.execute("SELECT * FROM pushid WHERE status = 'Y';")
     if cur.rowcount > 0:
         result = cur.fetchall()
         ids = list(zip(*result)[0])
@@ -101,7 +90,14 @@ def dailyalerton(bot, update, job_queue, chat_data):
     alertFlag[user_chat_id]='Y'
     
     # Update the database
-    cur.execute("INSERT INTO pushid (id,status,eff_date) VALUES (%s, %s, %s);", (user_chat_id, 'Y',datetime.datetime.now()))
+    cur.execute("SELECT * FROM pushid;")
+    if cur.rowcount > 0:
+        result = cur.fetchall()
+        ids = list(zip(*result)[0])
+        if str(user_chat_id) not in ids:
+            cur.execute("INSERT INTO pushid (id,status,eff_date) VALUES (%s, %s, %s);", (user_chat_id, 'Y',datetime.datetime.now()))
+        else:
+            cur.execute("UPDATE pushid SET status = 'Y', eff_date = %s WHERE id = %s AND status = 'N';", (datetime.datetime.now(),str(user_chat_id)))
     conn.commit()
     
     # Add job to queue
@@ -113,8 +109,13 @@ def dailyalertoff(bot, update, chat_data):
     user = update.message.from_user
     user_chat_id = update.message.chat_id
     
+    cur.execute("SELECT * FROM pushid WHERE status = 'Y';")
+    if cur.rowcount > 0:
+        result = cur.fetchall()
+        ids = list(zip(*result)[0])
+    
     #Removes the job if the user changed their mind
-    if 'job' not in chat_data:
+    if 'job' not in chat_data and user_chat_id not in ids:
         update.message.reply_text("You don't have daily alert turn on!")
         return
     job = chat_data['job']
@@ -128,13 +129,14 @@ def dailyalertoff(bot, update, chat_data):
     alertFlag[user_chat_id]='N'
     
     # Update the database
-    cur.execute("""DELETE FROM pushid WHERE id = %s AND status = 'Y';""", (str(user_chat_id),))
+    #cur.execute("""DELETE FROM pushid WHERE id = %s AND status = 'Y';""", (str(user_chat_id),))
+    cur.execute("UPDATE pushid SET status = 'N', eff_date = %s WHERE id = %s AND status = 'Y';", (datetime.datetime.now(),str(user_chat_id)))
     conn.commit()
     
 # The function to be called when daily cat alert is on    
 def scheduleCat(bot, job):
     rint = random.randint(0,len(cats)-1)
-    bot.send_photo(job.context, photo=cats.ix[rint][1])
+    bot.send_photo(job.context, photo=cats.ix[rint][1])  
 
 # Feedback to the dev    
 def comment(bot, update, args):
@@ -154,6 +156,7 @@ def error(bot, update, error):
 def unknown(bot, update):
     bot.send_message(chat_id=update.message.chat_id, text="ERROR!! Sorry, I didn't understand that command. Please try again!")
 
+
 # Inline handling - under devlopment
 #def inlinequery(bot, update):
 #    query = update.inline_query.query
@@ -171,6 +174,7 @@ def unknown(bot, update):
 def main():
     # Create the EventHandler and pass it your bot's token.
     updater = Updater("397745204:AAE9aPyJ16MHm1W_IP4JgpeijEy8KVqs6zc")
+    j = updater.job_queue
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
@@ -195,6 +199,14 @@ def main():
 
     # Start the Bot
     updater.start_polling(poll_interval = 1.0,timeout=20)
+    
+    # Existing user check
+    cur.execute("SELECT * FROM pushid WHERE status = 'Y';")
+    if cur.rowcount > 0:
+        result = cur.fetchall()
+        ids = list(zip(*result)[0])
+        for user in ids:
+            j.run_daily(scheduleCat, datetime.datetime.now(), context=user)
 
     # Run the bot until you press Ctrl-C or the process receives SIGINT,
     # SIGTERM or SIGABRT. This should be used most of the time, since
