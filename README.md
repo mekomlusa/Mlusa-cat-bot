@@ -10,7 +10,9 @@ Group chat functionality.
 
 v2: users can now decide whether to get a random cat photo push to their ends daily.
 
-··* v2.1: bug fixed for turning image push for twice or more times.
+Â·Â· v2.1: bug fixed for turning image push for twice or more times.
+.. v2.2: bug fixed for daily push automatically turning off due to daily cycling job. Once the daily alert is turned on by an user, it will stay on record until being turned off by the user at a later time.
+
 ## TODO
 
 Inline mode
