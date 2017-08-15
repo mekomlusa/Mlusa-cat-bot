@@ -21,6 +21,9 @@ import random
 import pandas
 from uuid import uuid4
 import datetime
+import os
+import psycopg2
+import urlparse
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -30,6 +33,22 @@ logger = logging.getLogger(__name__)
 
 cats = pandas.read_csv("catimage.csv",sep=',',header=None)
 alertFlag = {}
+
+# Connect to the database
+os.environ['DATABASE_URL'] = "postgres://twgrryvqpbmdeg:b13a294fef6cfbbd246fbb728a0afdd51830440d47d34b6e97c420ad01a2acfa@ec2-54-221-220-82.compute-1.amazonaws.com:5432/d5ieh1gkmiss4t"
+
+urlparse.uses_netloc.append("postgres")
+url = urlparse.urlparse(os.environ['DATABASE_URL'])
+
+conn = psycopg2.connect(
+    database=url.path[1:],
+    user=url.username,
+    password=url.password,
+    host=url.hostname,
+    port=url.port
+)
+
+cur = conn.cursor()
 
 # Command handlers
 # To start a bot
@@ -51,21 +70,39 @@ def dailyalerton(bot, update, job_queue, chat_data):
     user = update.message.from_user
     user_chat_id = update.message.chat_id
     
-    # Check to see if daily alert has already been turned on
+    # Check to see if daily alert has already been turned on (before cycling)
     if user_chat_id in alertFlag:
         if alertFlag[user_chat_id] == 'Y':
             update.message.reply_text('You have already turned on daily alert. There is no need to turn it on AGAIN.\n'
                                   'Reply /DailyAlertOff to turn daily photo push off, or /help to check out all other command.')
-            logger.info(" %s, ID %s attempts to turn on daily alert again while there is already a record on file." % (user.first_name, user_chat_id))
+            logger.info(" %s, ID %s attempts to turn on daily alert again while there is already a record on file. (BC)" % (user.first_name, user_chat_id))
             bot.send_message(chat_id='112839673', text="%s, ID %s attempts to turn on daily alert again while there is already a record on file." % (user.first_name, user_chat_id))
             return
     
+    # Check to see if daily alert has already been turned on (after cycling)
+    cur.execute("SELECT * FROM pushid;")
+    if cur.rowcount > 0:
+        result = cur.fetchall()
+        ids = list(zip(*result)[0])
+        if str(user_chat_id) in ids:
+            update.message.reply_text('You have already turned on daily alert. There is no need to turn it on AGAIN.\n'
+                                      'Reply /DailyAlertOff to turn daily photo push off, or /help to check out all other command.')
+            logger.info(" %s, ID %s attempts to turn on daily alert again while there is already a record on file. (AC)" % (user.first_name, user_chat_id))
+            bot.send_message(chat_id='112839673', text="%s, ID %s attempts to turn on daily alert again while there is already a record on file." % (user.first_name, user_chat_id))
+            job = job_queue.run_daily(scheduleCat, datetime.datetime.now(), context=user_chat_id)
+            chat_data['job'] = job
+            return
+        
     # if not then proceed
     update.message.reply_text('Daily alert turns ON. I will send you a cat photo every 24 hours.\n'
                               'Reply /DailyAlertOff to turn daily photo push off, or /help to check out all other command.')
     logger.info("Daily alert turned ON for %s, ID %s" % (user.first_name, user_chat_id))
     bot.send_message(chat_id='112839673', text="Daily alert turned ON for %s, ID %s" % (user.first_name, user_chat_id))
     alertFlag[user_chat_id]='Y'
+    
+    # Update the database
+    cur.execute("INSERT INTO pushid (id,status,eff_date) VALUES (%s, %s, %s);", (user_chat_id, 'Y',datetime.datetime.now()))
+    conn.commit()
     
     # Add job to queue
     job = job_queue.run_daily(scheduleCat, datetime.datetime.now(), context=user_chat_id)
@@ -89,7 +126,11 @@ def dailyalertoff(bot, update, chat_data):
     logger.info("Daily alert turned OFF for %s, ID %s" % (user.first_name, user_chat_id))
     bot.send_message(chat_id='112839673', text="Daily alert turned OFF for %s, ID %s" % (user.first_name, user_chat_id))
     alertFlag[user_chat_id]='N'
-
+    
+    # Update the database
+    cur.execute("""DELETE FROM pushid WHERE id = %s AND status = 'Y';""", (str(user_chat_id),))
+    conn.commit()
+    
 # The function to be called when daily cat alert is on    
 def scheduleCat(bot, job):
     rint = random.randint(0,len(cats)-1)
@@ -159,6 +200,10 @@ def main():
     # SIGTERM or SIGABRT. This should be used most of the time, since
     # start_polling() is non-blocking and will stop the bot gracefully.
     updater.idle()
+    
+    # Close communication with the database
+    cur.close()
+    conn.close()
 
 
 if __name__ == '__main__':
