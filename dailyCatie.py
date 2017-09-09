@@ -20,7 +20,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-cats = pandas.read_csv("catimage.csv",sep=',',header=None)
+#cats = pandas.read_csv("catimage.csv",sep=',',header=None)
 alertFlag = {}
 
 # Connect to the database
@@ -39,6 +39,14 @@ conn = psycopg2.connect(
 
 cur = conn.cursor()
 
+# get total cat images available in the library
+cur.execute("SELECT count(*) FROM catimage;")
+try:
+# the cat image library should NOT be empty
+    rc = cur.fetchone()
+except cur.rowcount == 0:
+    raise "No record found in the image library!"
+    
 # Command handlers
 # To start a bot
 def start(bot, update):
@@ -51,8 +59,10 @@ def help(bot, update):
 
 # For users to manually retrieve a cat photo    
 def catphoto(bot, update):
-    rint = random.randint(0,len(cats)-1)
-    update.message.reply_photo(cats.ix[rint][1])
+    rint = random.randint(0,rc[0]-1)
+    cur.execute("SELECT * FROM catimage WHERE id = %s;" % (rint))
+    pic_selected = cur.fetchone()
+    update.message.reply_photo(pic_selected[1])
 
 # daily update of a cat pic
 def dailyalerton(bot, update, job_queue, chat_data):
@@ -136,8 +146,10 @@ def dailyalertoff(bot, update, chat_data):
     
 # The function to be called when daily cat alert is on    
 def scheduleCat(bot, job):
-    rint = random.randint(0,len(cats)-1)
-    bot.send_photo(job.context, photo=cats.ix[rint][1])  
+    rint = random.randint(0,rc[0]-1)
+    cur.execute("SELECT * FROM catimage WHERE id = %s;" % (rint))
+    pic_selected = cur.fetchone()
+    bot.send_photo(job.context, photo=pic_selected[1])  
 
 # Feedback to the dev    
 def comment(bot, update, args):
