@@ -14,11 +14,15 @@ v2: users can now decide whether to get a random cat photo push to their ends da
 
 * v2.2: bug fixed for daily push automatically turning off due to daily cycling job. Once the daily alert is turned on by an user, it will stay on record until being turned off by the user at a later time.
 
+* v2.3: users can now submit their cat photos through the web interface which directly connects to Cloudinary. See [this repo](https://github.com/mekomlusa/catbot_submit) for more details. (I'm aware of the Rails security issue and do plan on fixing it soon.)
+
 ## TODO
 
 Inline mode
 
-Allow users to submit cat photos to the photo library
+Allow users to submit multiple cat photos in one shot to the photo library
+
+~~Allow users to submit cat photos to the photo library~~
 
 ~~Allow users to set whether to receive a random cat photo per day~~
 
