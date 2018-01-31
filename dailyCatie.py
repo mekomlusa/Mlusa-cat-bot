@@ -47,6 +47,14 @@ try:
 except cur.rowcount == 0:
     raise "No record found in the image library!"
     
+# for the cloudinary database
+cur.execute("SELECT count(*) FROM photos;")
+try:
+# the cloudinary library should NOT be empty
+    rcc = cur.fetchone()
+except cur.rowcount == 0:
+    raise "No record found in the Cloudinary image library!"
+    
 # Command handlers
 # To start a bot
 def start(bot, update):
@@ -55,14 +63,28 @@ def start(bot, update):
 # Helper function
 def help(bot, update):
     update.message.reply_text("""/start: to start the bot\n/catphoto: to get a random cat photo \n/comment: to send a comment to the developer.\n"""
-                              """/dailyalerton: once turn on, I will send you a random cat photo daily. \n/dailyalertoff: stop pushing cat photo daily if previously turned on.\nAll other messages: I will respond in the future! \nFor all questions please contact dev @mlusaaa""")
+                              """/dailyalerton: once turn on, I will send you a random cat photo daily. \n/dailyalertoff: stop pushing cat photo daily if previously turned on.\nAll other messages: I will respond in the future! \nFor all questions please contact dev @sophielei225""")
+
+# Submit function
+def submit(bot, update):
+    update.message.reply_text("""Thank you for your willingness to contribute to the cat image library!"""
+                              """Upload your pic here: http://bit.ly/2DQyzkV""")
 
 # For users to manually retrieve a cat photo    
 def catphoto(bot, update):
-    rint = random.randint(0,rc[0]-1)
-    cur.execute("SELECT * FROM catimage WHERE id = %s;" % (rint))
-    pic_selected = cur.fetchone()
-    update.message.reply_photo(pic_selected[1])
+    choice = random.randint(0,1)
+    if choice == 0:
+        # use the traditional cat image library
+        rint = random.randint(0,rc[0]-1)
+        cur.execute("SELECT * FROM catimage WHERE id = %s;" % (rint))
+        pic_selected = cur.fetchone()
+        update.message.reply_photo(pic_selected[1])
+    else:
+        # use cloudinary library to randomly fetch a photo
+        rint = random.randint(0,rcc[0]-1)
+        cur.execute("SELECT * FROM photos WHERE id = %s;" % (rint))
+        pic_selected = cur.fetchone()
+        update.message.reply_photo("http://res.cloudinary.com/mlusa/"+pic_selected[2])
 
 # daily update of a cat pic
 def dailyalerton(bot, update, job_queue, chat_data):
@@ -146,10 +168,19 @@ def dailyalertoff(bot, update, chat_data):
     
 # The function to be called when daily cat alert is on    
 def scheduleCat(bot, job):
-    rint = random.randint(0,rc[0]-1)
-    cur.execute("SELECT * FROM catimage WHERE id = %s;" % (rint))
-    pic_selected = cur.fetchone()
-    bot.send_photo(job.context, photo=pic_selected[1])  
+    choice = random.randint(0,1)
+    if choice == 0:
+        # use the traditional cat image library
+        rint = random.randint(0,rc[0]-1)
+        cur.execute("SELECT * FROM catimage WHERE id = %s;" % (rint))
+        pic_selected = cur.fetchone()
+        bot.send_photo(job.context, photo=pic_selected[1])
+    else:
+        # use cloudinary library to randomly fetch a photo
+        rint = random.randint(0,rcc[0]-1)
+        cur.execute("SELECT * FROM photos WHERE id = %s;" % (rint))
+        pic_selected = cur.fetchone()
+        bot.send_photo(job.context, photo="http://res.cloudinary.com/mlusa/"+pic_selected[2])
 
 # Feedback to the dev    
 def comment(bot, update, args):
@@ -195,6 +226,7 @@ def main():
     # on different commands - answer in Telegram
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help))
+    dp.add_handler(CommandHandler("submit", submit))
     dp.add_handler(CommandHandler('Catphoto',catphoto))
     dp.add_handler(CommandHandler('Comment', comment, pass_args=True))
     dp.add_handler(CommandHandler('DailyAlertOn',dailyalerton, pass_job_queue=True,
