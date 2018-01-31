@@ -63,11 +63,12 @@ def start(bot, update):
 # Helper function
 def help(bot, update):
     update.message.reply_text("""/start: to start the bot\n/catphoto: to get a random cat photo \n/comment: to send a comment to the developer.\n"""
-                              """/dailyalerton: once turn on, I will send you a random cat photo daily. \n/dailyalertoff: stop pushing cat photo daily if previously turned on.\nAll other messages: I will respond in the future! \nFor all questions please contact dev @sophielei225""")
+                              """/dailyalerton: once turn on, I will send you a random cat photo daily. \n/dailyalertoff: stop pushing cat photo daily if previously turned on.\n/submit: submit your cat photos to the catie library.\n"""
+                              """All other messages: I will respond in the future! \nFor all questions please contact dev @sophielei225""")
 
 # Submit function
 def submit(bot, update):
-    update.message.reply_text("""Thank you for your willingness to contribute to the cat image library!"""
+    update.message.reply_text("""Thank you for your willingness to contribute to the cat image library! """
                               """Upload your pic here: http://bit.ly/2DQyzkV""")
 
 # For users to manually retrieve a cat photo    
