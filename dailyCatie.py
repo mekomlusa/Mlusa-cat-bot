@@ -24,8 +24,6 @@ logger = logging.getLogger(__name__)
 alertFlag = {}
 
 # Connect to the database
-os.environ['DATABASE_URL'] = "postgres://twgrryvqpbmdeg:b13a294fef6cfbbd246fbb728a0afdd51830440d47d34b6e97c420ad01a2acfa@ec2-54-221-220-82.compute-1.amazonaws.com:5432/d5ieh1gkmiss4t"
-
 urlparse.uses_netloc.append("postgres")
 url = urlparse.urlparse(os.environ['DATABASE_URL'])
 
