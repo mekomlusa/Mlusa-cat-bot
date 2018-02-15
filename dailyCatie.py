@@ -66,8 +66,9 @@ def help(bot, update):
 
 # Submit function
 def submit(bot, update):
-    update.message.reply_text("""Thank you for your willingness to contribute to the cat image library! """
-                              """Upload your pic here: http://bit.ly/2DQyzkV""")
+	update.message.reply_text("""Submit was temporaily disabled. If you would like to contribute please contact @sophielei225""")
+    #update.message.reply_text("""Thank you for your willingness to contribute to the cat image library! """
+                              #"""Upload your pic here: http://bit.ly/2DQyzkV""")
 
 # For users to manually retrieve a cat photo    
 def catphoto(bot, update):
