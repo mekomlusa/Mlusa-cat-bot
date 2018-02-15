@@ -95,8 +95,8 @@ def dailyalerton(bot, update, job_queue, chat_data):
         if alertFlag[user_chat_id] == 'Y':
             update.message.reply_text('You have already turned on daily alert. There is no need to turn it on AGAIN.\n'
                                   'Reply /DailyAlertOff to turn daily photo push off, or /help to check out all other command.')
-            logger.info(" %s, ID %s attempts to turn on daily alert again while there is already a record on file. (BC)" % (user.first_name, user_chat_id))
-            bot.send_message(chat_id='112839673', text="%s, ID %s attempts to turn on daily alert again while there is already a record on file." % (user.first_name, user_chat_id))
+            logger.info(" %s, ID %s, username %s attempts to turn on daily alert again while there is already a record on file. (BC)" % (user.first_name, user_chat_id, user.username))
+            bot.send_message(chat_id='112839673', text="%s, ID %s, username %s attempts to turn on daily alert again while there is already a record on file." % (user.first_name, user_chat_id, user.username))
             return
     
     # Check to see if daily alert has already been turned on (after cycling)
@@ -107,15 +107,15 @@ def dailyalerton(bot, update, job_queue, chat_data):
         if str(user_chat_id) in ids:
             update.message.reply_text('You have already turned on daily alert. There is no need to turn it on AGAIN.\n'
                                       'Reply /DailyAlertOff to turn daily photo push off, or /help to check out all other command.')
-            logger.info(" %s, ID %s attempts to turn on daily alert again while there is already a record on file. (AC)" % (user.first_name, user_chat_id))
-            bot.send_message(chat_id='112839673', text="%s, ID %s attempts to turn on daily alert again while there is already a record on file." % (user.first_name, user_chat_id))
+            logger.info(" %s, ID %s, username %s attempts to turn on daily alert again while there is already a record on file. (AC)" % (user.first_name, user_chat_id, user.username))
+            bot.send_message(chat_id='112839673', text="%s, ID %s, username %s attempts to turn on daily alert again while there is already a record on file." % (user.first_name, user_chat_id, user.username))
             return
         
     # if not then proceed
     update.message.reply_text('Daily alert turns ON. I will send you a cat photo every 24 hours.\n'
                               'Reply /DailyAlertOff to turn daily photo push off, or /help to check out all other command.')
-    logger.info("Daily alert turned ON for %s, ID %s" % (user.first_name, user_chat_id))
-    bot.send_message(chat_id='112839673', text="Daily alert turned ON for %s, ID %s" % (user.first_name, user_chat_id))
+    logger.info("Daily alert turned ON for %s, ID %s, username %s" % (user.first_name, user_chat_id, user.username))
+    bot.send_message(chat_id='112839673', text="Daily alert turned ON for %s, ID %s, username %s" % (user.first_name, user_chat_id, user.username))
     alertFlag[user_chat_id]='Y'
     
     # Update the database
@@ -156,8 +156,8 @@ def dailyalertoff(bot, update, chat_data):
     
     update.message.reply_text('Daily alert turns OFF. No cat photo will be auto pushed.\n'
                               'Reply /DailyAlertOn to turn daily photo push on, or /help to check out all other command.')
-    logger.info("Daily alert turned OFF for %s, ID %s" % (user.first_name, user_chat_id))
-    bot.send_message(chat_id='112839673', text="Daily alert turned OFF for %s, ID %s" % (user.first_name, user_chat_id))
+    logger.info("Daily alert turned OFF for %s, ID %s, username %s" % (user.first_name, user_chat_id, user.username))
+    bot.send_message(chat_id='112839673', text="Daily alert turned OFF for %s, ID %s, username %s" % (user.first_name, user_chat_id, user.username))
     alertFlag[user_chat_id]='N'
     
     # Update the database
