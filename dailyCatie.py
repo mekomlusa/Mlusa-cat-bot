@@ -214,18 +214,18 @@ def main():
     updater.start_polling(poll_interval = 1.0,timeout=20)
     
     # Connect to the Cloudinary Admin API
-    result = cloudinary.api.resources(cloud_name="mlusa",api_key="932661556554526",
+    res = cloudinary.api.resources(cloud_name="mlusa",api_key="932661556554526",
                                   api_secret="NoeLOB4DNZKu1fzal-0j7zy_evg",
                                   max_results="500")
-    pl.extend(result['resources'])
+    pl.extend(res['resources'])
     
     # Once exceed the 500 photos limit
-    while 'next_cursor' in result:
-        nc = result['next_cursor']
-        result = cloudinary.api.resources(cloud_name="mlusa",api_key="932661556554526",
+    while 'next_cursor' in res:
+        nc = res['next_cursor']
+        res = cloudinary.api.resources(cloud_name="mlusa",api_key="932661556554526",
                                   api_secret="NoeLOB4DNZKu1fzal-0j7zy_evg",
                                   max_results="500",next_cursor=nc)
-        pl.extend(result['resources'])
+        pl.extend(res['resources'])
     
     # Existing user check
     cur.execute("SELECT * FROM pushid WHERE status = 'Y';")
