@@ -206,6 +206,12 @@ def main():
     
     # Inline query handling
 #    dp.add_handler(InlineQueryHandler(inlinequery))
+        
+    # log all errors
+    dp.add_error_handler(error)
+
+    # Start the Bot
+    updater.start_polling(poll_interval = 1.0,timeout=20)
     
     # Connect to the Cloudinary Admin API
     result = cloudinary.api.resources(cloud_name="mlusa",api_key="932661556554526",
@@ -220,12 +226,6 @@ def main():
                                   api_secret="NoeLOB4DNZKu1fzal-0j7zy_evg",
                                   max_results="500",next_cursor=nc)
         pl.extend(result['resources'])
-        
-    # log all errors
-    dp.add_error_handler(error)
-
-    # Start the Bot
-    updater.start_polling(poll_interval = 1.0,timeout=20)
     
     # Existing user check
     cur.execute("SELECT * FROM pushid WHERE status = 'Y';")
