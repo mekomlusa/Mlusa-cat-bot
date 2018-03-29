@@ -185,7 +185,7 @@ def unknown(bot, update):
 
 def main():
     # Create the EventHandler and pass it your bot's token.
-    updater = Updater("397745204:AAGfs2uEvGLG-ebzYft1kQYpqyONMG1X70w")
+    updater = Updater("397745204:AAGfs2uEvGLG-ebzYft1kQYpqyONMG1X70w", request_kwargs={'read_timeout': 6, 'connect_timeout': 7})
     j = updater.job_queue
 
     # Get the dispatcher to register handlers
