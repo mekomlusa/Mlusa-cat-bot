@@ -30,6 +30,7 @@ pl = []
 # Connect to the database
 urlparse.uses_netloc.append("postgres")
 url = urlparse.urlparse(os.environ['DATABASE_URL'])
+token = os.environ['TELEGRAM']
 
 conn = psycopg2.connect(
     database=url.path[1:],
@@ -169,13 +170,6 @@ def unknown(bot, update):
     bot.send_message(chat_id=update.message.chat_id, text="ERROR!! Sorry, I didn't understand that command. Please try again!")
 
 def main():
-    # Read token
-    with open("token.txt", 'r') as f:
-        lines = f.readlines()
-    for i in range(len(lines)):
-        item = lines[i].strip("\n")
-        if item.startswith("telegram"):
-            token = item.split(" ")[1]
     # Create the EventHandler and pass it your bot's token.
     updater = Updater(token, request_kwargs={'read_timeout': 6, 'connect_timeout': 7})
     j = updater.job_queue
