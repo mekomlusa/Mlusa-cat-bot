@@ -168,24 +168,16 @@ def error(bot, update, error):
 def unknown(bot, update):
     bot.send_message(chat_id=update.message.chat_id, text="ERROR!! Sorry, I didn't understand that command. Please try again!")
 
-
-# Inline handling - under devlopment
-#def inlinequery(bot, update):
-#    query = update.inline_query.query
-##    results = list()
-##
-##    results.append(InlineQueryResultArticle(id=uuid4(),
-##                                            title="Caps",
-##                                            input_message_content=InputTextMessageContent(
-##                                                query.upper())))
-#
-#    #update.inline_query.answer(results)
-#    update.inline_query.answer(InlineQueryResultArticle(id=uuid4(),title="Caps",input_message_content=InputTextMessageContent(query.upper())))
-#    #update.message.reply_photo("https://drive.google.com/file/d/0BylaRC6E32UxcVZfYjAxWTRpZ3M/view?usp=sharing")
-
 def main():
+    # Read token
+    with open("token.txt", 'r') as f:
+        lines = f.readlines()
+    for i in range(len(lines)):
+        item = lines[i].strip("\n")
+        if item.startswith("telegram"):
+            token = item.split(" ")[1]
     # Create the EventHandler and pass it your bot's token.
-    updater = Updater("397745204:AAGfs2uEvGLG-ebzYft1kQYpqyONMG1X70w", request_kwargs={'read_timeout': 6, 'connect_timeout': 7})
+    updater = Updater(token, request_kwargs={'read_timeout': 6, 'connect_timeout': 7})
     j = updater.job_queue
 
     # Get the dispatcher to register handlers
