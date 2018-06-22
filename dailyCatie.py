@@ -210,7 +210,7 @@ def main():
         nc = res['next_cursor']
         res = cloudinary.api.resources(cloud_name="mlusa",api_key=os.environ['CLD_API_KEY'],
                                   api_secret=os.environ['CLD_API_SECRET'],
-                                  max_results="500")
+                                  max_results="500",next_cursor=nc)
         pl.extend(res['resources'])
     
     # Existing user check
