@@ -154,7 +154,7 @@ def scheduleCat(bot, job):
     try:
         bot.send_photo(job.context, photo=pic_selected)
     except BadRequest as e:
-        print(str(e))
+        print("scheduleCat call failed on",job.context)
         return
     
 # Feedback to the dev    
