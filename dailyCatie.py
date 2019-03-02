@@ -14,6 +14,8 @@ import os
 import psycopg2
 import urlparse
 import cloudinary.api
+from telegram.error import (TelegramError, Unauthorized, BadRequest, 
+                            TimedOut, ChatMigrated, NetworkError)
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -149,7 +151,12 @@ def dailyalertoff(bot, update, chat_data):
 def scheduleCat(bot, job):
     rint = random.randint(0,len(pl)-1)
     pic_selected = pl[rint]['secure_url']
-    bot.send_photo(job.context, photo=pic_selected)
+    try:
+        bot.send_photo(job.context, photo=pic_selected)
+    except BadRequest as e:
+        logger.warning('Update "%s" caused error "%s"' % (update, error))
+        print(str(e))
+        return
     
 # Feedback to the dev    
 def comment(bot, update, args):
@@ -222,14 +229,15 @@ def main():
             #j.run_daily(scheduleCat, datetime.datetime.now(), context=user)
             j.run_once(scheduleCat, datetime.datetime.now(), context=user)
 
+    # Close communication with the database
+    cur.close()
+    conn.close()
+    
     # Run the bot until you press Ctrl-C or the process receives SIGINT,
     # SIGTERM or SIGABRT. This should be used most of the time, since
     # start_polling() is non-blocking and will stop the bot gracefully.
     updater.idle()
-    
-    # Close communication with the database
-    cur.close()
-    conn.close()
+
 
 
 if __name__ == '__main__':
