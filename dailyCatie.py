@@ -154,7 +154,6 @@ def scheduleCat(bot, job):
     try:
         bot.send_photo(job.context, photo=pic_selected)
     except BadRequest as e:
-        logger.warning('Update "%s" caused error "%s"' % (update, error))
         print(str(e))
         return
     
