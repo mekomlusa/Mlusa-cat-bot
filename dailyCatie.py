@@ -156,6 +156,9 @@ def scheduleCat(bot, job):
     except BadRequest as e:
         print("scheduleCat call failed on",job.context)
         return
+    except Unauthorized as e:
+        print("bot is blocked by",job.context)
+        return
     
 # Feedback to the dev    
 def comment(bot, update, args):
