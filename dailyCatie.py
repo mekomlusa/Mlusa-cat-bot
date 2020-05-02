@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Daily catie Bot to send cat photos on Telegram
+# Update 5/2/2020: Python 2.7 to Python 3; rewrite to be compatible with python-telegram-bot v12
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, Job
 #import telegram
@@ -12,8 +13,9 @@ from uuid import uuid4
 import datetime
 import os
 import psycopg2
-import urlparse
+import mysql.connector
 import cloudinary.api
+import argparse
 from telegram.error import (TelegramError, Unauthorized, BadRequest, 
                             TimedOut, ChatMigrated, NetworkError)
 
@@ -23,88 +25,78 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-#cats = pandas.read_csv("catimage.csv",sep=',',header=None)
-alertFlag = {}
-
 # Photolist to store photos from the Cloudinary API (instead of calling the API multiple time/connecting to the database):
 pl = []
 
-# Connect to the database
-urlparse.uses_netloc.append("postgres")
-url = urlparse.urlparse(os.environ['DATABASE_URL'])
 token = os.environ['TELEGRAM']
 
-conn = psycopg2.connect(
-    database=url.path[1:],
-    user=url.username,
-    password=url.password,
-    host=url.hostname,
-    port=url.port
-)
+def openDatabaseConnect(choice):
+    assert(choice.lower() in ['mysql', 'psql']), "ERROR: unknown database connection type. Available parameters are: psql, mysql"
 
-cur = conn.cursor()
+    if choice == 'mysql': # default option
+        conn = mysql.connector.connect(
+            host=os.environ['MYSQL_HOST'],
+            port=3306,
+            user=os.environ['MYSQL_USER'],
+            password=os.environ['MYSQL_PASSWORD'],
+            database=os.environ['MYSQL_DATABASE'],
+        )
+    else: # psql - could be on Heroku? If not heroku, need to change the url parsing lines below
+        DATABASE_URL = os.environ['DATABASE_URL']
+        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
     
+    cur = conn.cursor()
+    return cur, conn
+
 # Command handlers
 # To start a bot
-def start(bot, update):
+def start(update, context):
     update.message.reply_text("""Hi! I'm a cat bot. I can send you a random cat photo daily. \nCheck out /help for all available commands now.\nI'm still under development. Stay tuned!""")
 
 # Helper function
-def help(bot, update):
+def help(update, context):
     update.message.reply_text("""/start: to start the bot\n/catphoto: to get a random cat photo \n/comment: to send a comment to the developer.\n"""
                               """/dailyalerton: once turn on, I will send you a random cat photo daily. \n/dailyalertoff: stop pushing cat photo daily if previously turned on.\n/submit: submit your cat photos to the catie library.\n"""
-                              """All other messages: I will respond in the future! \nFor all questions please contact dev @sophielei225""")
+                              """All other messages: I will respond in the future! \nFor all questions please contact dev @hanabi_225""")
 
 # Submit function
-def submit(bot, update):
-	update.message.reply_text("""Submit was temporaily disabled. If you would like to contribute please contact @sophielei225""")
+def submit(update, context):
+	update.message.reply_text("""Submit was temporaily disabled. If you would like to contribute please contact @hanabi_225""")
     #update.message.reply_text("""Thank you for your willingness to contribute to the cat image library! """
                               #"""Upload your pic here: http://bit.ly/2DQyzkV""")
 
 # For users to manually retrieve a cat photo    
-def catphoto(bot, update):
+def catphoto(update, context):
     rint = random.randint(0,len(pl)-1)
     pic_selected = pl[rint]['secure_url']
     update.message.reply_photo(pic_selected)
 
 # daily update of a cat pic
-def dailyalerton(bot, update, job_queue, chat_data):
+def dailyalerton(update, context, cur, conn):
     user = update.message.from_user
     user_chat_id = update.message.chat_id
     
-    # Check to see if daily alert has already been turned on (before cycling)
-    if user_chat_id in alertFlag:
-        if alertFlag[user_chat_id] == 'Y':
-            update.message.reply_text('You have already turned on daily alert. There is no need to turn it on AGAIN.\n'
-                                  'Reply /DailyAlertOff to turn daily photo push off, or /help to check out all other command.')
-            logger.info(" %s, ID %s, username %s attempts to turn on daily alert again while there is already a record on file. (BC)" % (user.first_name, user_chat_id, user.username))
-            bot.send_message(chat_id='112839673', text="%s, ID %s, username %s attempts to turn on daily alert again while there is already a record on file." % (user.first_name, user_chat_id, user.username))
-            return
-    
-    # Check to see if daily alert has already been turned on (after cycling)
-    cur.execute("SELECT * FROM pushid WHERE status = 'Y';")
+    # Check to see if daily alert has already been turned on
+    cur.execute("SELECT id FROM pushid WHERE status = 'Y';")
     if cur.rowcount > 0:
         result = cur.fetchall()
-        ids = list(zip(*result)[0])
-        if str(user_chat_id) in ids:
+        if str(user_chat_id) in result:
             update.message.reply_text('You have already turned on daily alert. There is no need to turn it on AGAIN.\n'
                                       'Reply /DailyAlertOff to turn daily photo push off, or /help to check out all other command.')
             logger.info(" %s, ID %s, username %s attempts to turn on daily alert again while there is already a record on file. (AC)" % (user.first_name, user_chat_id, user.username))
-            bot.send_message(chat_id='112839673', text="%s, ID %s, username %s attempts to turn on daily alert again while there is already a record on file." % (user.first_name, user_chat_id, user.username))
+            context.bot.send_message(chat_id='112839673', text="%s, ID %s, username %s attempts to turn on daily alert again while there is already a record on file." % (user.first_name, user_chat_id, user.username))
             return
         
     # if not then proceed
     update.message.reply_text('Daily alert turns ON. I will send you a cat photo every 24 hours.\n'
                               'Reply /DailyAlertOff to turn daily photo push off, or /help to check out all other command.')
     logger.info("Daily alert turned ON for %s, ID %s, username %s" % (user.first_name, user_chat_id, user.username))
-    bot.send_message(chat_id='112839673', text="Daily alert turned ON for %s, ID %s, username %s" % (user.first_name, user_chat_id, user.username))
-    alertFlag[user_chat_id]='Y'
+    context.bot.send_message(chat_id='112839673', text="Daily alert turned ON for %s, ID %s, username %s" % (user.first_name, user_chat_id, user.username))
     
     # Update the database
-    cur.execute("SELECT * FROM pushid;")
+    cur.execute("SELECT id FROM pushid;")
     if cur.rowcount > 0:
-        result = cur.fetchall()
-        ids = list(zip(*result)[0])
+        ids = cur.fetchall()
         if str(user_chat_id) not in ids:
             cur.execute("INSERT INTO pushid (id,status,eff_date) VALUES (%s, %s, %s);", (user_chat_id, 'Y',datetime.datetime.now()))
         else:
@@ -113,74 +105,74 @@ def dailyalerton(bot, update, job_queue, chat_data):
     
     # Add job to queue
     #job = job_queue.run_daily(scheduleCat, datetime.datetime.now(), context=user_chat_id)
-    job = job_queue.run_once(scheduleCat, datetime.datetime.now(), context=user_chat_id)
-    chat_data['job'] = job
+    job = context.jobqueue.run_once(scheduleCat, datetime.datetime.now(), context=user_chat_id)
+    context.chat_data['job'] = job
     
 # Turn off daily update of a cat pic    
-def dailyalertoff(bot, update, chat_data):
+def dailyalertoff(update, context, cur, conn):
     user = update.message.from_user
     user_chat_id = update.message.chat_id
     
-    cur.execute("SELECT * FROM pushid WHERE status = 'Y';")
+    cur.execute("SELECT id FROM pushid WHERE status = 'Y';")
     if cur.rowcount > 0:
-        result = cur.fetchall()
-        ids = list(zip(*result)[0])
-    
-    #Removes the job if the user changed their mind
-    if 'job' not in chat_data and str(user_chat_id) not in ids:
-        update.message.reply_text("You don't have daily alert turn on!")
-        return
-    # push generated by the cycling, not enabled by the user:
-    elif 'job' in chat_data:
-        job = chat_data['job']
-        job.schedule_removal()
-        del chat_data['job']
+        ids = cur.fetchall()
+        #Removes the job if the user changed their mind
+        if 'job' not in context.chat_data and str(user_chat_id) not in ids:
+            update.message.reply_text("You don't have daily alert turn on!")
+            return
+        # push generated by the cycling, not enabled by the user:
+        elif 'job' in context.chat_data:
+            job = context.chat_data['job']
+            job.schedule_removal()
+            del context.chat_data['job']
     
     update.message.reply_text('Daily alert turns OFF. No cat photo will be auto pushed.\n'
                               'Reply /DailyAlertOn to turn daily photo push on, or /help to check out all other command.')
     logger.info("Daily alert turned OFF for %s, ID %s, username %s" % (user.first_name, user_chat_id, user.username))
-    bot.send_message(chat_id='112839673', text="Daily alert turned OFF for %s, ID %s, username %s" % (user.first_name, user_chat_id, user.username))
-    alertFlag[user_chat_id]='N'
+    context.bot.send_message(chat_id='112839673', text="Daily alert turned OFF for %s, ID %s, username %s" % (user.first_name, user_chat_id, user.username))
     
     # Update the database
-    #cur.execute("""DELETE FROM pushid WHERE id = %s AND status = 'Y';""", (str(user_chat_id),))
     cur.execute("UPDATE pushid SET status = 'N', eff_date = %s WHERE id = %s AND status = 'Y';", (datetime.datetime.now(),str(user_chat_id)))
     conn.commit()
     
 # The function to be called when daily cat alert is on    
-def scheduleCat(bot, job):
+def scheduleCat(context):
+    job = context.job
     rint = random.randint(0,len(pl)-1)
     pic_selected = pl[rint]['secure_url']
     try:
-        bot.send_photo(job.context, photo=pic_selected)
-    except BadRequest as e:
+        context.bot.send_photo(job.context, photo=pic_selected)
+    except BadRequest:
         print("scheduleCat call failed on",job.context)
         return
-    except Unauthorized as e:
+    except Unauthorized:
         print("bot is blocked by",job.context)
         return
     
 # Feedback to the dev    
-def comment(bot, update, args):
-    txt = ' '.join(args)
+def comment(update, context):
+    txt = ' '.join(context.args)
     if len(txt) == 0:
         update.message.reply_text("""ERROR!! No input was received.""")
     else:
         update.message.reply_text("""Thanks for your feedback! I'll take it :)""")
         newinfo = "New feedback received! From: "+update.message.from_user.username+", Content: "+txt
-        bot.send_message(chat_id='112839673', text=newinfo)
+        context.bot.send_message(chat_id='112839673', text=newinfo)
 
 # Log all errors
-def error(bot, update, error):
-    logger.warn('Update "%s" caused error "%s"' % (update, error))
+def error(update, context):
+    logger.warn('Update "%s" caused error "%s"' % (update, context.error))
 
 # Handles all unknown commands   
-def unknown(bot, update):
-    bot.send_message(chat_id=update.message.chat_id, text="ERROR!! Sorry, I didn't understand that command. Please try again!")
+def unknown(update, context):
+    context.bot.send_message(chat_id=update.message.chat_id, text="ERROR!! Sorry, I didn't understand that command yet. Please try again!")
 
-def main():
+def main(db_choice):
+    # open a db connection
+    cur, conn = openDatabaseConnect(db_choice)
+
     # Create the EventHandler and pass it your bot's token.
-    updater = Updater(token)
+    updater = Updater(token, use_context=True)
     j = updater.job_queue
 
     # Get the dispatcher to register handlers
@@ -223,24 +215,28 @@ def main():
         pl.extend(res['resources'])
     
     # Existing user check
-    cur.execute("SELECT * FROM pushid WHERE status = 'Y';")
+    cur.execute("SELECT id FROM pushid WHERE status = 'Y';")
     if cur.rowcount > 0:
         result = cur.fetchall()
-        ids = list(zip(*result)[0])
-        for user in ids:
+        for user in result:
             #j.run_daily(scheduleCat, datetime.datetime.now(), context=user)
             j.run_once(scheduleCat, datetime.datetime.now(), context=user)
-
-    # Close communication with the database
-    cur.close()
-    conn.close()
     
     # Run the bot until you press Ctrl-C or the process receives SIGINT,
     # SIGTERM or SIGABRT. This should be used most of the time, since
     # start_polling() is non-blocking and will stop the bot gracefully.
     updater.idle()
 
-
+    # Close communication with the database
+    # cur.close()
+    # conn.close()
 
 if __name__ == '__main__':
-    main()
+
+    parser = argparse.ArgumentParser(
+        description='DailyCatie Bot')
+    parser.add_argument('-db','--database', required=False, nargs='?', const='mysql',
+                        help='Choose the database engine: `psql` or `mysql` (default mysql)')
+    args = parser.parse_args()
+
+    main(args.database)
