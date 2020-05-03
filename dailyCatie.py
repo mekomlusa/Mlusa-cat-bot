@@ -20,7 +20,7 @@ import sys
 from dbhelper import DBHelper
 
 # handle database connections
-db = DBHelper(choice='mysql') # change to 'psql' if you're using psql
+db = DBHelper(choice='psql') # change to 'psql' if you're using psql
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
