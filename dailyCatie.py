@@ -35,12 +35,12 @@ token = os.environ['TELEGRAM']
 # Command handlers
 # To start a bot
 def start(update, context):
-    update.message.reply_text("""Hi! I'm a cat bot. I can send you a random cat photo daily. \nCheck out /help for all available commands now.\nI'm still under development. Stay tuned!""")
+    update.message.reply_text("""Hi! I'm a cat bot. I can send you a random cat photo daily. \nCheck out /help for all available commands.\nI'm still under active development. Stay tuned!""")
 
 # Helper function
 def help(update, context):
     update.message.reply_text("""/start: to start the bot\n/catphoto: to get a random cat photo \n/comment: to send a comment to the developer.\n"""
-                              """/dailyalerton: once turn on, I will send you a random cat photo daily. \n/dailyalertoff: stop pushing cat photo daily if previously turned on.\n/submit: submit your cat photos to the catie library.\n"""
+                              """/dailyalerton: once turn on, I will send you a random cat photo daily. \n/dailyalertoff: stop pushing cat photo daily if previously turned on.\n"""
                               """All other messages: I will respond in the future! \nFor all questions please contact dev @hanabi_225""")
 
 # Submit function
