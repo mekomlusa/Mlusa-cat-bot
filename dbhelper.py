@@ -17,11 +17,11 @@ class DBHelper:
                 password=os.environ['MYSQL_PASSWORD'],
                 database=os.environ['MYSQL_DATABASE'],
             )
+            self.cur = self.conn.cursor(buffered=True)
         else: # psql - could be on Heroku? If not heroku, need to change the url parsing lines below
             DATABASE_URL = os.environ['DATABASE_URL']
             self.conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-
-        self.cur = self.conn.cursor(buffered=True)
+            self.cur = self.conn.cursor()
 
     def setup(self):
         stmt = "CREATE TABLE IF NOT EXISTS pushid (id varchar(20), status varchar(5), eff_date datetime);"
