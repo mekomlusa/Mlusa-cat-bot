@@ -1,5 +1,6 @@
 import os
 import cloudinary.api
+import random
 
 class CloudinaryHelper:
     def __init__(self):
@@ -15,6 +16,9 @@ class CloudinaryHelper:
 
     def get_all_available_photos(self):
         return self.photo_urls
+
+    def get_one_random_photo(self):
+        return random.choice(self.photo_urls)
 
     # for first pull
     def initial_pull_from_Cloudinary_server(self):

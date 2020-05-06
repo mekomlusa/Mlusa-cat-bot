@@ -7,7 +7,6 @@
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, Job
 import logging
-import random
 import pandas
 from uuid import uuid4
 import datetime
@@ -34,10 +33,6 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-# Photolist to store photos from the Cloudinary API (instead of calling the API multiple time/connecting to the database):
-# pl = []
-token = os.environ['TELEGRAM']
-
 # Command handlers
 # To start a bot
 def start(update, context):
@@ -51,7 +46,7 @@ def help(update, context):
 
 # Admin helper function
 def admin_help(update, context):
-    update.message.reply_text("""ADMIN HELPER FUNCTIONS: /pullnewpic: Sync with Cloudinary photo bed.\n/submit: Submit new photos (currently disasbled).""")
+    update.message.reply_text("""ADMIN HELPER FUNCTIONS: /pullnewpic: Sync with Cloudinary photo bed.\n/submit: Submit new photos (currently disasbled).\n/broadcast: send broadcast messages to all users.""")
 
 
 # Submit function
@@ -62,10 +57,7 @@ def submit(update, context):
 
 # For users to manually retrieve a cat photo    
 def catphoto(update, context):
-    pl = cloudinary_connector.get_all_available_photos()
-    rint = random.randint(0,len(pl)-1)
-    pic_selected = pl[rint]
-    update.message.reply_photo(pic_selected)
+    update.message.reply_photo(cloudinary_connector.get_one_random_photo())
 
 # daily update of a cat pic
 def dailyalerton(update, context):
@@ -131,9 +123,7 @@ def dailyalertoff(update, context):
 # The function to be called when daily cat alert is on    
 def scheduleCat(context):
     job = context.job
-    pl = cloudinary_connector.get_all_available_photos()
-    rint = random.randint(0,len(pl)-1)
-    pic_selected = pl[rint]
+    pic_selected = cloudinary_connector.get_one_random_photo()
     try:
         context.bot.send_photo(job.context, photo=pic_selected)
     except BadRequest:
@@ -166,6 +156,17 @@ def comment(update, context):
         newinfo = "New feedback received! From: "+update.message.from_user.username+", Content: "+txt
         context.bot.send_message(chat_id=os.environ['TELEGRAM_ADMIN_CHATID'], text=newinfo)
 
+# Broadcast to the group
+def broadcast(update, context):
+    txt = ' '.join(context.args)
+    if len(txt) == 0:
+        update.message.reply_text("""ERROR!! No input was received.""")
+    else:
+        active_users_list = db.get_active_users()
+        for active_user in active_users_list:
+            context.bot.send_message(chat_id=active_user, 
+                            text="New message from the admin: {}".format(txt))
+
 # Log all errors
 def error(update, context):
     logger.warn('Update "%s" caused error "%s"' % (update, context.error))
@@ -176,7 +177,7 @@ def unknown(update, context):
 
 def main():
     # Create the EventHandler and pass it your bot's token.
-    updater = Updater(token, use_context=True)
+    updater = Updater(os.environ['TELEGRAM'], use_context=True)
     j = updater.job_queue
 
     # Get the dispatcher to register handlers
@@ -188,6 +189,7 @@ def main():
     dp.add_handler(CommandHandler("adminhelp", admin_help, filters=Filters.user(username='@hanabi_225')))
     dp.add_handler(CommandHandler("submit", submit, filters=Filters.user(username='@hanabi_225')))
     dp.add_handler(CommandHandler("pullnewpic", checkIfNewPhotoLoaded, filters=Filters.user(username='@hanabi_225')))
+    dp.add_handler(CommandHandler("broadcast", broadcast, filters=Filters.user(username='@hanabi_225')))
     dp.add_handler(CommandHandler('Catphoto',catphoto))
     dp.add_handler(CommandHandler('Comment', comment, pass_args=True))
     dp.add_handler(CommandHandler('DailyAlertOn',dailyalerton))
