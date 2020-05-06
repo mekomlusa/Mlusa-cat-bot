@@ -14,5 +14,6 @@ USER appuser
 
 COPY dailyCatie.py .
 COPY dbhelper.py .
+COPY utilities.py .
 
 CMD python ./dailyCatie.py

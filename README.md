@@ -31,6 +31,8 @@ v3: major updates -
 * Dockerized option now available. See below for installation instruction.
 * Add supports to mysql.
 
+v3.1: Abstract calls to Cloudinary servers. Admin users can now check if new photos have been uploaded to the server and refresh the photo stack through the `pullnewpic` command.
+
 ## Deploy the bot
 
 Prerequisite: Please ensure that you have a telegram bot token available, also an active account on [Cloudinary](https://cloudinary.com) is required (and you can upload photos to your Cloudinary account, so that this bot will send random photos from your albums).
@@ -41,7 +43,7 @@ Prerequisite: Please ensure that you have a telegram bot token available, also a
 
 2. Substitute secrets in `env-public.list` to your secrets (Note: `DATABASE_URL` is used by Heroku. Can be left empty there). You may want to set up a MySQL environment beforehand (localhost is fine) so that the script could connect to your designated database.
 
-3. Build the image: `docker build -t "dailycatie:docker" .`
+3. Build the image: `docker build -t "dailycatie:docker" .` (Change `dailycatie:docker` to be your desired tag name, if needed)
 
 4. Run the built image: `docker run --detach --env-file=env-public.list --name your-name-here --net=host dailycatie:docker` (Substitute `your-name-here` to the name of your container)
 
