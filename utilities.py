@@ -39,10 +39,9 @@ class CloudinaryHelper:
 
     # for pull in command
     def consecutive_pull_from_Cloudinary_server(self):
-        # Connect to the Cloudinary Admin API
         res = cloudinary.api.resources(cloud_name=os.environ['CLD_USERNAME'],api_key=os.environ['CLD_API_KEY'],
                                     api_secret=os.environ['CLD_API_SECRET'],
-                                    max_results="500")
+                                    max_results="500", next_cursor=self.next_cursor) # pull from the last saved cursor
 
         if len(res['resources']) > self.last_pull_image_length: # keep pulling, as new images have been added
             self.last_pull_image_length = len(res['resources'])
