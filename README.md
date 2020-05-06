@@ -74,6 +74,8 @@ The bot should be up and running. Hit Ctrl+C (or Command+C) to exit.
 
 ## TODO
 
+Auto configure for Heroku (no need to change multiple lines of code)
+
 Inline mode
 
 ~~Redesign submission UI~~
