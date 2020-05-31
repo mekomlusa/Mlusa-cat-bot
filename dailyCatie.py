@@ -91,8 +91,11 @@ def dailyalerton(update, context):
         db.add_user(str(user_chat_id))
     
     # Add job to queue
-    #job = context.job_queue.run_daily(scheduleCat, datetime.datetime.now(), context=user_chat_id)
-    job = context.job_queue.run_once(scheduleCat, datetime.datetime.now(), context=user_chat_id)
+    if 'job' not in context.chat_data:
+        job = context.job_queue.run_daily(scheduleCat, datetime.time(22), context=user_chat_id)
+        catphoto(update, context)
+    else:
+        job = context.job_queue.run_once(scheduleCat, datetime.datetime.now(), context=user_chat_id)
     context.chat_data['job'] = job
     
 # Turn off daily update of a cat pic    

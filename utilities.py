@@ -34,8 +34,9 @@ class CloudinaryHelper:
             res = cloudinary.api.resources(cloud_name=os.environ['CLD_USERNAME'],api_key=os.environ['CLD_API_KEY'],
                                     api_secret=os.environ['CLD_API_SECRET'],
                                     max_results="500",next_cursor=self.next_cursor)
-            self.last_pull_image_length = len(res['resources'])
             self.photo_urls.extend([x['secure_url'] for x in res['resources']])
+            
+        self.last_pull_image_length = len(self.photo_urls) % 500
 
     # for pull in command
     def consecutive_pull_from_Cloudinary_server(self):

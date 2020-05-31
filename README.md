@@ -31,7 +31,7 @@ v3: major updates -
 * Dockerized option now available. See below for installation instruction.
 * Add supports to mysql.
 
-v3.1: Abstract calls to Cloudinary servers. Admin users can now check if new photos have been uploaded to the server and refresh the photo stack through the `pullnewpic` command.
+v3.1: Abstract calls to Cloudinary servers. Admin users can now check if new photos have been uploaded to the server and refresh the photo stack through the `pullnewpic` command; also send messages to all subscribed users via the `broadcast` command (please do not abuse this functionality).
 
 ## Deploy the bot
 
@@ -61,7 +61,7 @@ Prerequisite: Please ensure that you have a telegram bot token available, also a
 
 ### Through local
 
-Note: only recommend for tempoary testing purpose.
+Note: only recommend for temporary testing purpose.
 
 1. Clone the whole repository to your environment.
 
